@@ -26,13 +26,18 @@ class MainActivity : AppCompatActivity() {
         textoResultado = findViewById(R.id.textoResultado)
         val btnGravar = findViewById<Button>(R.id.btnGravar)
 
-        // Verifica permissão de microfone
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), 1)
         }
 
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            Toast.makeText(this, "Reconhecimento de voz indisponível", Toast.LENGTH_LONG).show()
+            return
+        }
+
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        
         val intentReconhecimento = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
@@ -45,7 +50,9 @@ class MainActivity : AppCompatActivity() {
                     textoResultado.text = matches[0]
                 }
             }
-            override fun onError(error: Int) { Toast.makeText(this@MainActivity, "Erro: $error", Toast.LENGTH_SHORT).show() }
+            override fun onError(error: Int) { 
+                Toast.makeText(this@MainActivity, "Erro: $error", Toast.LENGTH_SHORT).show() 
+            }
             override fun onReadyForSpeech(params: Bundle?) {}
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
@@ -62,7 +69,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        speechRecognizer.destroy()
+        if (::speechRecognizer.isInitialized) {
+            speechRecognizer.destroy()
+        }
         super.onDestroy()
     }
 }
